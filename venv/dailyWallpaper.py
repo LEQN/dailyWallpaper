@@ -4,6 +4,7 @@ from datetime import date
 
 wallpapers = {}
 filename = "wallpaper.json"
+img_path = "/home/leon/Pictures/wallpapers"
 
 
 def save_wallpapers():
@@ -13,7 +14,7 @@ def save_wallpapers():
 
 
 def load_dir():
-    files_in_dir = os.listdir("/home/leon/Pictures/wallpapers")
+    files_in_dir = os.listdir(img_path)
     for i in range(0, len(files_in_dir)):
         wallpapers[str(i)] = files_in_dir[i] #typecast key to string to match json format
 
@@ -27,19 +28,24 @@ def load_dir():
                 save_wallpapers()
 
 
-def update_wallpaper():
+def update_wallpaper(date_today):
     print("Updating wallpaper")
-    date_dict = {"date" : str(date.today())}
-    with open(filename) as f:
-        data = json.load(f)
-        data.update(date_dict)
+    try:
+        with open(filename) as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        data = {"wallpapers" : wallpapers}
+    data["date"] = date_today
     json.dump(data, open(filename, "w"))
 
 
 def load_last_update():
     print("Loading last update")
-    data = json.load(open(filename, "r"))
-    return data.get("date", None)
+    try:
+        data = json.load(open(filename, "r"))
+        return data.get("date", None)
+    except json.JSONDecodeError:
+        return None
 
 
 def date_check():
@@ -47,7 +53,7 @@ def date_check():
     last_update = load_last_update()
     today = str(date.today())
     if last_update != today:
-        update_wallpaper()
+        update_wallpaper(today)
 
 
 if __name__ == "__main__":
