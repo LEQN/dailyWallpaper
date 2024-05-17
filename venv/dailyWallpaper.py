@@ -1,5 +1,7 @@
 import os
 import json
+import schedule
+import time
 from datetime import date
 
 wallpapers = {}
@@ -56,6 +58,14 @@ def date_check():
         update_wallpaper(today)
 
 
+def scheduled_checks():
+    schedule.every().hour.do(date_check)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
 if __name__ == "__main__":
     load_dir()
     date_check()
+    scheduled_checks()
