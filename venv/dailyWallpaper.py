@@ -2,6 +2,7 @@ import os
 import json
 import schedule
 import time
+import random
 from datetime import date
 
 wallpapers = {}
@@ -30,8 +31,52 @@ def load_dir():
                 save_wallpapers()
 
 
+def load_used_wallpapers(wallpaper_key):
+    try:
+        with open(filename, "r") as f:
+            data = json.load(f)
+        used_wallpapers = data.get("used", [])
+    except:
+        return False
+    if not str(wallpaper_key) in used_wallpapers:
+        return False
+    else:
+        return True
+
+
+def save_used_wallpapers(wallpaper):
+    try:
+        with open(filename) as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        data = {"wallpapers": wallpapers}
+
+    used_wallpapers = data.get("used", [])
+    used_wallpapers.append(str(wallpaper))
+    data["used"] = used_wallpapers
+    json.dump(data, open(filename, "w"))
+
+
+def random_wallpaper():
+    last_img_key = len(wallpapers) - 1
+    random_img_key = random.randint(0, last_img_key)
+    while True:
+        if load_used_wallpapers(random_img_key):
+            random_img_key = random.randint(0, last_img_key)
+        else:
+            break
+    save_used_wallpapers(random_img_key)
+    chosen_wallpaper = wallpapers.get(str(random_img_key))
+    return chosen_wallpaper
+
+
+def set_wallpaper(wallpaper):
+    print("setting wallpaper: " + wallpaper)
+
+
 def update_wallpaper(date_today):
-    print("Updating wallpaper")
+    chosen_wallpaper = random_wallpaper()
+    set_wallpaper(chosen_wallpaper)
     try:
         with open(filename) as f:
             data = json.load(f)
