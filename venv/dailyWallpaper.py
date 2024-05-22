@@ -8,7 +8,7 @@ from datetime import date
 
 wallpapers = {}
 filename = "wallpaper.json"
-img_path = "/home/leon/Pictures/wallpapers"
+img_path = "/home/leon/Pictures/wallpapers/"
 
 
 def save_wallpapers():
@@ -72,8 +72,15 @@ def random_wallpaper():
 
 
 def set_wallpaper(wallpaper):
-    print("setting wallpaper: " + wallpaper)
-    subprocess.Popen(["feh", "--bg-scale", img_path+wallpaper])
+    chosen_wallpaper_path = img_path+wallpaper
+    if not os.path.exists(chosen_wallpaper_path):
+        print("Error: path to wallpaper does not exist")
+        return
+    command = ["feh", "--bg-scale", chosen_wallpaper_path]
+    try:
+        subprocess.Popen(command)
+    except:
+        print("Failed to set wallpaper.")
 
 
 def update_wallpaper(date_today):
