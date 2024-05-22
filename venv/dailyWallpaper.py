@@ -3,6 +3,7 @@ import json
 import schedule
 import time
 import random
+import subprocess
 from datetime import date
 
 wallpapers = {}
@@ -72,6 +73,7 @@ def random_wallpaper():
 
 def set_wallpaper(wallpaper):
     print("setting wallpaper: " + wallpaper)
+    subprocess.Popen(["feh", "--bg-scale", img_path+wallpaper])
 
 
 def update_wallpaper(date_today):
