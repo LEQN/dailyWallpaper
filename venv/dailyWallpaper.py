@@ -6,131 +6,95 @@ import random
 import subprocess
 from datetime import date
 
-wallpapers = {}
-filename = "wallpaper.json"
-img_path = "/home/leon/Pictures/wallpapers/"
+imgs_path = "/home/leon/Pictures/wallpapers/"
+filename = "wallpapers.json"
+data = {}
 
 
-def save_wallpapers():
-    with open(filename, "w") as f:
-        data = {"wallpapers": wallpapers}
-        json.dump(data, f)
+def save_data():
+  with open(filename, "w") as f:
+      json.dump(data, f)
 
 
-def load_dir():
-    files_in_dir = os.listdir(img_path)
-    for i in range(0, len(files_in_dir)):
-        wallpapers[str(i)] = files_in_dir[i] #typecast key to string to match json format
-
-    if not os.path.exists(filename):
-        save_wallpapers()
-    else:
-        with open(filename, "r") as f:
-            saved_walls = json.load(f)
-            if saved_walls["wallpapers"] != wallpapers:
-                print("Files in directory have changed.")
-                save_wallpapers()
+def load_data():
+  global data
+  try:
+      with open(filename, "r") as f:
+          data = json.load(f)
+  except json.JSONDecodeError:
+      data = {"wallpapers": {}, "used_wallpapers": [], "date": None}
 
 
-def load_used_wallpapers(wallpaper_key):
-    try:
-        with open(filename, "r") as f:
-            data = json.load(f)
-        used_wallpapers = data.get("used", [])
-    except:
-        return False
-    if not str(wallpaper_key) in used_wallpapers:
-        return False
-    else:
-        return True
+def initialize():
+  wallpapers = {}
+  files_in_dir = os.listdir(imgs_path)
+  for i in range(0, len(files_in_dir)):
+      wallpapers[str(i)] = files_in_dir[i] #typecast key to string to match json format
+
+  load_data()
+  if wallpapers != data.get("wallpapers"):
+      data["wallpapers"] = wallpapers
+      data["used_wallpapers"] = []
+      data["date"] = None
 
 
-def save_used_wallpapers(wallpaper):
-    try:
-        with open(filename) as f:
-            data = json.load(f)
-    except json.JSONDecodeError:
-        data = {"wallpapers": wallpapers}
+def get_random_wallpaper():
+  wallpapers = data.get("wallpapers")
+  used_wallpapers = data.get("used_wallpapers")
+  available_wallpapers = [x for x in wallpapers.keys() if x not in used_wallpapers]
 
-    used_wallpapers = data.get("used", [])
-    used_wallpapers.append(str(wallpaper))
-    data["used"] = used_wallpapers
-    json.dump(data, open(filename, "w"))
+  if len(available_wallpapers) == 0:
+      available_wallpapers = list(wallpapers.keys())
+      used_wallpapers = []
 
-
-def random_wallpaper():
-    last_img_key = len(wallpapers) - 1
-    random_img_key = random.randint(0, last_img_key)
-    while True:
-        if load_used_wallpapers(random_img_key):
-            random_img_key = random.randint(0, last_img_key)
-        else:
-            break
-    save_used_wallpapers(random_img_key)
-    chosen_wallpaper = wallpapers.get(str(random_img_key))
-    return chosen_wallpaper
+  chosen_wallpaper_key = random.choice(available_wallpapers)
+  used_wallpapers.append(chosen_wallpaper_key)
+  data["used_wallpapers"] = used_wallpapers
+  chosen_wallpaper = wallpapers.get(chosen_wallpaper_key)
+  return chosen_wallpaper
 
 
 def set_wallpaper(wallpaper):
-    chosen_wallpaper_path = img_path+wallpaper
-    if not os.path.exists(chosen_wallpaper_path):
-        print("Error: path to wallpaper does not exist")
-        return
-    command = ["feh", "--bg-scale", chosen_wallpaper_path]
-    try:
-        subprocess.Popen(command)
-    except:
-        print("Failed to set wallpaper.")
+  chosen_wallpaper_path = imgs_path+wallpaper
+  if not os.path.exists(chosen_wallpaper_path):
+      print(f"Error: path to wallpaper does not exist")
+      return
+
+  command = ["feh", "--bg-scale", chosen_wallpaper_path]
+  subprocess.Popen(command)
 
 
 def update_wallpaper(date_today):
-    chosen_wallpaper = random_wallpaper()
-    set_wallpaper(chosen_wallpaper)
-    try:
-        with open(filename) as f:
-            data = json.load(f)
-    except json.JSONDecodeError:
-        data = {"wallpapers" : wallpapers}
-    data["date"] = date_today
-    json.dump(data, open(filename, "w"))
+  chosen_wallpaper = get_random_wallpaper()
+  set_wallpaper(chosen_wallpaper)
+  data["date"] = date_today
+  save_data()
 
 
-def load_last_update():
-    print("Loading last update")
-    try:
-        data = json.load(open(filename, "r"))
-        return data.get("date", None)
-    except json.JSONDecodeError:
-        return None
-
-
-def current_wallpaper(today):
-    try:
-        data = json.load(open(filename, "r"))
-    except:
-        update_wallpaper(today)
-    current = data.get("used")[-1]
-    set_wallpaper(wallpapers.get(str(current)))
+def current_wallpaper():
+  wallpapers = data.get("wallpapers")
+  current_wallpaper_key = data.get("used_wallpapers")[-1]
+  current_wallpaper = wallpapers.get(str(current_wallpaper_key))
+  set_wallpaper(current_wallpaper)
 
 
 def date_check():
-    print("checking date.")
-    last_update = load_last_update()
-    today = str(date.today())
-    if last_update != today:
-        update_wallpaper(today)
-    else:
-        current_wallpaper(today)
+  saved_date = data.get("date")
+  today = str(date.today())
+  if saved_date != today:
+      update_wallpaper(today)
+  else:
+      current_wallpaper()
 
 
 def scheduled_checks():
-    schedule.every().hour.do(date_check)
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+  schedule.every().hour.do(date_check)
+  while True:
+      schedule.run_pending()
+      time.sleep(1)
 
 
 if __name__ == "__main__":
-    load_dir()
-    date_check()
-    scheduled_checks()
+  initialize()
+  date_check()
+  scheduled_checks()
