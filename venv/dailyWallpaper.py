@@ -104,12 +104,23 @@ def load_last_update():
         return None
 
 
+def current_wallpaper(today):
+    try:
+        data = json.load(open(filename, "r"))
+    except:
+        update_wallpaper(today)
+    current = data.get("used")[-1]
+    set_wallpaper(wallpapers.get(str(current)))
+
+
 def date_check():
     print("checking date.")
     last_update = load_last_update()
     today = str(date.today())
     if last_update != today:
         update_wallpaper(today)
+    else:
+        current_wallpaper(today)
 
 
 def scheduled_checks():
