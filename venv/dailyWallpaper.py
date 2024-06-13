@@ -21,7 +21,7 @@ def load_data():
   try:
       with open(filename, "r") as f:
           data = json.load(f)
-  except json.JSONDecodeError:
+  except (FileNotFoundError, json.JSONDecodeError):
       data = {"wallpapers": {}, "used_wallpapers": [], "date": None}
 
 
@@ -60,7 +60,7 @@ def set_wallpaper(wallpaper):
       print(f"Error: path to wallpaper does not exist")
       return
 
-  command = ["feh", "--bg-scale", chosen_wallpaper_path]
+  command = ["feh", "--bg-fill", chosen_wallpaper_path]
   subprocess.Popen(command)
 
 
@@ -79,11 +79,12 @@ def current_wallpaper():
 
 
 def date_check():
-  saved_date = data.get("date")
-  today = str(date.today())
-  if saved_date != today:
+    print("checking")
+    saved_date = data.get("date")
+    today = str(date.today())
+    if saved_date != today:
       update_wallpaper(today)
-  else:
+    else:
       current_wallpaper()
 
 
