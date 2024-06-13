@@ -5,7 +5,7 @@ This Python program automatically changes the desktop wallpaper daily on a Linux
 ## Prerequisites
 - Linux system.
 - 'feh' installed for setting wallpapers.
-
+- pip install the schedule module.
 
 
 ## Installation
